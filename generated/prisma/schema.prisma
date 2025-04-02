@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  guardians GuardianUser[] // many-to-many with Guardian
+  health    Health[]
+  events    EventParticipant[]
+}
+
+model Guardian {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  users GuardianUser[] // many-to-many with User
+}
+
+model GuardianUser {
+  guardian   Guardian @relation(fields: [guardianId], references: [id])
+  guardianId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@id([guardianId, userId])
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  eventDate   DateTime
+  location    String?
+  createdAt   DateTime @default(now())
+
+  participants EventParticipant[]
+}
+
+model EventParticipant {
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  joinedAt DateTime @default(now())
+
+  @@id([eventId, userId])
+}
+
+model DailyTip {
+  id      String   @id @default(uuid())
+  tipDate DateTime @unique
+  content String
+}
+
+model Health {
+  id            String   @id @default(uuid())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  recordedAt    DateTime @default(now())
+  heartRate     Int?
+  bloodPressure String?
+  steps         Int?
+  sleepHours    Float?
+  notes         String?
+}
